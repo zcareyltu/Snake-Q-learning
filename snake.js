@@ -19,6 +19,11 @@ const mouthWidth = 0.08;
 const mouthLength = 0.27;
 const mouthColor = [255, 82, 157];
 
+const aiTypes = {
+    'manual': manualInput,
+    'direct': DirectAI
+};
+
 //User input variables
 var aiType;
 var mapWidth;
@@ -33,6 +38,9 @@ var canvas;
 var graphics;
 var timerID;
 var loseScreenDisplayed = false;
+var getInput;
+var keyX = 0;
+var keyY = 0;
 
 //Game variables
 var inputX;
@@ -54,7 +62,11 @@ function initialize(){
 
 function loadUserVariables(){
     aiType = HTML.getListValue("aiType", "manual");
+    getInput = aiTypes[aiType];
+    if(!getInput) getInput = manualInput;
+
     mapWidth = mapHeight = HTML.getNumberValue("mapSize", 10);
+    if(!mapWidth) mapWidth = mapHeight = 10;
 
     gameSpeed = parseInt(HTML.getListValue("gameSpeed", "500"));
     if(!gameSpeed) gameSpeed = 500;
@@ -107,7 +119,8 @@ function gameReset(){
 }
 
 function game(){
-    if(Math.abs(inputX - velX) <=1 && Math.abs(inputY - velY) <= 1){
+    getInput();
+    if(Math.abs(inputX - velX) <=1 && Math.abs(inputY - velY) <= 1 && (inputX !=0 || inputY != 0)){
         velX = inputX;
         velY = inputY;
     }
@@ -122,7 +135,7 @@ function game(){
     }else{
         trail.shift();
     }
-    
+
     if(((velX != 0 || velY != 0) && isSnakeColliding()) || (posX < 0) || (posX >= mapWidth) || (posY < 0) || (posY >= mapHeight)){
         loseGame();
         return;
@@ -294,23 +307,28 @@ function drawApple(){
     );
 }
 
+function manualInput(){
+    inputX = keyX;
+    inputY = keyY;
+}
+
 function keyDown(evt){
     switch(evt.keyCode){
         case Keys.A:
         case Keys.LeftArrow: 
-            inputX=-1; inputY=0;
+            keyX=-1; keyY=0;
             break;
         case Keys.W:
         case Keys.UpArrow:
-            inputX=0; inputY=-1;
+            keyX=0; keyY=-1;
             break;
         case Keys.D:
         case Keys.RightArrow: 
-            inputX=1; inputY=0;
+            keyX=1; keyY=0;
             break;
         case Keys.S:
         case Keys.DownArrow: 
-            inputX=0; inputY=1;
+            keyX=0; keyY=1;
             break;
         case Keys.Space:
             if(loseScreenDisplayed){
