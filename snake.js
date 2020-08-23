@@ -10,6 +10,15 @@ const GameOverTextColor = [255, 255, 255];
 const GameOverFadeColor = [0, 0, 0];
 const GameOverFadeTransparency = 0.3;
 
+const eyeDistance = 0.10;
+const eyeHeight = 0.22;
+const eyeSize = 0.18;
+const eyeColor = [0, 0, 0];
+
+const mouthWidth = 0.08;
+const mouthLength = 0.27;
+const mouthColor = [255, 82, 157];
+
 //User input variables
 var aiType;
 var mapWidth;
@@ -26,12 +35,15 @@ var timerID;
 var loseScreenDisplayed = false;
 
 //Game variables
-var xv;
-var yv;
+var inputX;
+var inputY;
 var posX;
 var posY;
 var appleX;
 var applyY;
+var velX;
+var velY;
+var trail;
 
 function initialize(){
     canvas = document.getElementById("canvas"); 
@@ -77,26 +89,45 @@ function gameReset(){
     drawBG();
     graphics.copyImage(bgCanvas); 
 
-    xv = 0;
-    yv = 0;
+    inputX = 0;
+    inputY = 0;
+    velX = 0;
+    velY = 0;
     posX = Math.floor(mapWidth / 2);
     posY = Math.floor(mapHeight / 2);
     randomApplePosition();
+    trail = [];
+    trail.push({
+        x: posX,
+        y: posY
+    });
 
     timerID = HTML.addTimer(game, gameSpeed);
     game();
 }
 
 function game(){
-    posX += xv;
-    posY += yv;
-    if((posX < 0) || (posX >= mapWidth) || (posY < 0) || (posY >= mapHeight)){
-        loseGame();
-        return;
+    if(Math.abs(inputX - velX) <=1 && Math.abs(inputY - velY) <= 1){
+        velX = inputX;
+        velY = inputY;
     }
+
+    posX += velX;
+    posY += velY;
+    trail.push({
+        x: posX,
+        y: posY
+    });
 
     if(posX == appleX && posY == appleY){
         randomApplePosition();
+    }else{
+        trail.shift();
+    }
+    
+    if((posX < 0) || (posX >= mapWidth) || (posY < 0) || (posY >= mapHeight)){
+        loseGame();
+        return;
     }
 
     graphics.copyImage(bgCanvas);
@@ -133,15 +164,107 @@ function randomApplePosition(){
 }
 
 function drawSnake(){
+    var offsetX = Math.floor((cellPixels - snakePixels) / 2);
+    var offsetY = Math.floor((cellPixels - snakePixels) / 2);
+    
+    var lastPos = trail[0];
+    for(var i in trail){
+        var segment = trail[i];
+
+        var x1 = Math.min(segment.x, lastPos.x);
+        var x2 = Math.max(segment.x, lastPos.x);
+        var y1 = Math.min(segment.y, lastPos.y);
+        var y2 = Math.max(segment.y, lastPos.y);
+        cellX = cellPixels * segment.x;
+        cellY = cellPixels * segment.y;
+
+        graphics.fillRect(
+            (x1 * cellPixels) + offsetX,
+            (y1 * cellPixels) + offsetY,
+            (x2 - x1) * cellPixels + snakePixels,
+            (y2 - y1) * cellPixels + snakePixels,
+            snakeColor
+        );
+
+        lastPos = segment;
+    }
+
     var cellX = cellPixels * posX;
     var cellY = cellPixels * posY;
+    var x = cellX + offsetX;
+    var y = cellY + offsetY;
 
+    //Draw a little face :)
+    var eyeX1;
+    var eyeX2;
+    var eyeY1;
+    var eyeY2;
+    var mouthX;
+    var mouthY;
+    var mouthW;
+    var mouthH;
+    var mouthPixelsLength = Math.floor(mouthLength * cellPixels);
+    var mouthPixelsWidth = Math.floor(mouthWidth * cellPixels);
+    var mouthOffset = Math.floor((snakePixels / 2) - (mouthPixelsWidth / 2));
+    if(velX == 1){
+        eyeX1 = eyeX2 = 1-eyeHeight-eyeSize;
+        eyeY1 = 0.5-eyeDistance-eyeSize;
+        eyeY2 = 0.5+eyeDistance;
+        mouthX = x + snakePixels;
+        mouthY = y + mouthOffset;
+        mouthW = mouthPixelsLength;
+        mouthH = mouthPixelsWidth;
+    }else if(velX == -1){
+        eyeX1 = eyeX2 = eyeHeight;
+        eyeY1 = 0.5-eyeDistance-eyeSize;
+        eyeY2 = 0.5+eyeDistance;
+        mouthX = x - mouthPixelsLength;
+        mouthY = y + mouthOffset;
+        mouthW = mouthPixelsLength;
+        mouthH = mouthPixelsWidth;
+    }else if(velY == 1){
+        eyeX1 = 0.5-eyeDistance-eyeSize;
+        eyeX2 = 0.5+eyeDistance;
+        eyeY1 = eyeY2 = 1-eyeHeight-eyeSize;
+        mouthX = x + mouthOffset;
+        mouthY = y + snakePixels;
+        mouthW = mouthPixelsWidth;
+        mouthH = mouthPixelsLength;
+    }else{
+        eyeX1 = 0.5-eyeDistance-eyeSize;
+        eyeX2 = 0.5+eyeDistance;
+        eyeY1 = eyeY2 = eyeHeight;
+        mouthX = x + mouthOffset;
+        mouthY = y - mouthPixelsLength;
+        mouthW = mouthPixelsWidth;
+        mouthH = mouthPixelsLength;
+    }
+
+    //eye1
     graphics.fillRect(
-        cellX + Math.floor((cellPixels - snakePixels) / 2),
-        cellY + Math.floor((cellPixels - snakePixels) / 2),
-        snakePixels,
-        snakePixels,
-        snakeColor
+        cellX + Math.floor(cellPixels * eyeX1),
+        cellY + Math.floor(cellPixels * eyeY1),
+        Math.floor(cellPixels * eyeSize),
+        Math.floor(cellPixels * eyeSize),
+        eyeColor
+    );
+
+    //eye2
+    graphics.fillRect(
+        cellX + Math.floor(cellPixels * eyeX2),
+        cellY + Math.floor(cellPixels * eyeY2),
+        Math.floor(cellPixels * eyeSize),
+        Math.floor(cellPixels * eyeSize),
+        eyeColor
+    );
+
+    //Mouth
+    graphics.fillRect(
+        mouthX,
+        mouthY,
+        mouthW,
+        mouthH,
+        mouthColor
     );
 }
 
@@ -162,19 +285,19 @@ function keyDown(evt){
     switch(evt.keyCode){
         case Keys.A:
         case Keys.LeftArrow: 
-            xv=-1; yv=0;
+            inputX=-1; inputY=0;
             break;
         case Keys.W:
         case Keys.UpArrow:
-            xv=0; yv=-1;
+            inputX=0; inputY=-1;
             break;
         case Keys.D:
         case Keys.RightArrow: 
-            xv=1; yv=0;
+            inputX=1; inputY=0;
             break;
         case Keys.S:
         case Keys.DownArrow: 
-            xv=0; yv=1;
+            inputX=0; inputY=1;
             break;
         case Keys.Space:
             if(loseScreenDisplayed){
