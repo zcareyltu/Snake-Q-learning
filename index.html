@@ -1,72 +1,39 @@
-<canvas id="gc" width="400" height="400"></canvas>
-<script>
-    window.onload=function() {
-        canv=document.getElementById("gc");
-        ctx=canv.getContext("2d");
-        document.addEventListener("keydown", keyPush);
-        setInterval(game, 1000/15);
-    }
+<!DOCTYPE HTML>
+<html>
 
-    px=py=10;
-    gs=tc=20;
-    ax=ay=15;
-    xv = yv = 0;
-    trail=[];
-    tail =5;
-    function game() {
-        px+=xv;
-        py+=yv;
-        if(px<0){
-            px=tc-1;
-        }
-        if(px>tc-1){
-            px=0;
-        }
-        if(py<0){
-            py=tc-1;
-        }
-        if(py>tc-1){
-            py=0;
-        }
-        ctx.fillStyle="black";
-        ctx.fillRect(0,0,canv.width,canv.height);
+    <head>
+        <title>
+            Snake AI
+        </title>
+    </head>
 
-        ctx.fillStyle="lime";
-        for(var i=0; i<trail.length;i++){
-            ctx.fillRect(trail[i].x*gs,trail[i].y*gs,gs-2,gs-2);
-            if(trail[i].x==px && trail[i].y==py){
-                tail=5;
-            }
-        }
-        trail.push({x:px, y:py});
-        while(trail.length>tail){
-            trail.shift();
-        }
 
-        if(ax==px && ay==py){
-                tail++;
-                ax=Math.floor(Math.random()*tc);
-                ay=Math.floor(Math.random()*tc);
-            }
+    <body id="body" style="text-align:center;">
+        <h1 style="color:green;">
+            Snake AI
+        </h1>
 
-        ctx.fillStyle="red";
-        ctx.fillRect(ax*gs,ay*gs,gs-2,gs-2);
-    }
+        <form onsubmit="return false"><!--</form> action="/action_page.php">-->
+            <!--<p>Select AI type:</p>
+            <input type="radio" id="manual" name="aiType" onclick="aiTypeChange(this);" value="manual" checked>Manual</input>
+            <input type="radio" id="direct" name="aiType" onclick="aiTypeChange(this);" value="direct">Direct</input>-->
+            Select AI Type:
+            <select name="aiType" id="aiType">
+                <option value = "manual" selected>Manual</option>
+                <option value = "direct">Direct</option>
+            </select>
+            <br>
+            Map Size:
+            <input type="number" id="mapSize" name="mapSize" min="10" max="100" value="10">
+            <br>
+            <button onclick="applySettingsClick()">Apply</button>
+            <br>
+        </form>
+        
+        <canvas id="canvas" width="400" height="400"></canvas>
+    </body>
 
-    function keyPush(evt){
-        switch(evt.keyCode){
-            case 37: //left arrow
-                xv=-1; yv=0;
-                break;
-            case 38: //up arrow
-                xv=0; yv=-1;
-                break;
-            case 39: //right arrow
-                xv=1; yv=0;
-                break;
-            case 40: //down arrow
-                xv=0; yv=1;
-                break;
-        }
-    }
-</script>
+    <script src="HTML.js"></script>
+    <script src="snake.js"></script>
+
+</html>
