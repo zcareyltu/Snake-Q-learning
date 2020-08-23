@@ -14,18 +14,29 @@
         </h1>
 
         <form onsubmit="return false"><!--</form> action="/action_page.php">-->
-            <!--<p>Select AI type:</p>
-            <input type="radio" id="manual" name="aiType" onclick="aiTypeChange(this);" value="manual" checked>Manual</input>
-            <input type="radio" id="direct" name="aiType" onclick="aiTypeChange(this);" value="direct">Direct</input>-->
             Select AI Type:
             <select name="aiType" id="aiType">
                 <option value = "manual" selected>Manual</option>
                 <option value = "direct">Direct</option>
             </select>
             <br>
+
             Map Size:
             <input type="number" id="mapSize" name="mapSize" min="10" max="100" value="10">
             <br>
+
+            Speed:
+            <select name="gameSpeed" id="gameSpeed">
+                <option value=500 selected>Very Slow</option>
+                <option value=250>Slow</option>
+                <option value=190>Medium</option>
+                <option value=133>Fast</option>
+                <option value=67>Very Fast</option>
+                <option value=16>Insane</option>
+                <option value=1>Ludicrous</option>
+            </select>
+            <br>
+
             <button onclick="applySettingsClick()">Apply</button>
             <br>
         </form>

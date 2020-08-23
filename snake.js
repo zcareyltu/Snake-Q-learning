@@ -6,45 +6,53 @@ const bgColor2 = [142, 204, 57];
 const snakeColor = [74, 117, 44];
 const appleColor = [231, 71, 29];
 
+const GameOverTextColor = [255, 255, 255];
+const GameOverFadeColor = [0, 0, 0];
+const GameOverFadeTransparency = 0.3;
+
 //User input variables
 var aiType;
 var mapWidth;
 var mapHeight;
+var gameSpeed;
 
 //Program variables
 var cellPixels;
 var snakePixels;
 var bgCanvas;
+var canvas;
 var graphics;
+var timerID;
+var loseScreenDisplayed = false;
+
+//Game variables
+var xv;
+var yv;
+var posX;
+var posY;
+var appleX;
+var applyY;
 
 function initialize(){
-    loadUserVariables();
+    canvas = document.getElementById("canvas"); 
 
-    var sizeModifier = Math.ceil(600 / (cellSize * mapWidth));
-    cellPixels = cellSize * sizeModifier;
-    snakePixels = cellSize * sizeModifier;
-
-    var canvas = document.getElementById("canvas");
-    canvas.width = cellPixels * mapWidth;
-    canvas.height = cellPixels * mapHeight;
-    graphics = HTML.getGraphics(canvas); 
-
-    drawBG(); //Pass canvas to copy size
-    graphics.copyImage(bgCanvas); 
-    //document.addEventListener("keydown", keyPush);
-    //setInterval(game, 1000/15);
+    HTML.addKeyDownListener(keyDown);
+    //HTML.addKeyUpListener(keyUp);
 }
 
 function loadUserVariables(){
     aiType = HTML.getListValue("aiType", "manual");
     mapWidth = mapHeight = HTML.getNumberValue("mapSize", 10);
+
+    gameSpeed = parseInt(HTML.getListValue("gameSpeed", "500"));
+    if(!gameSpeed) gameSpeed = 500;
 }
 
 function drawBG(){
     bgCanvas = document.createElement("canvas");
     bgCanvas.width = cellPixels * mapWidth;
     bgCanvas.height = cellPixels * mapHeight;
-    var g = HTML.getGraphics(canvas);
+    var g = HTML.getGraphics(bgCanvas);
 
     g.fill(bgColor2);
     for(var y = 0; y < mapHeight; y++){
@@ -54,28 +62,149 @@ function drawBG(){
     }
 }
 
-function keyPush(evt){
+function gameReset(){
+    if(timerID) HTML.stopTimer(timerID);
+    loadUserVariables();
+
+    var sizeModifier = Math.ceil(600 / (cellSize * mapWidth));
+    cellPixels = cellSize * sizeModifier;
+    snakePixels = snakeSize * sizeModifier;
+
+    canvas.width = cellPixels * mapWidth;
+    canvas.height = cellPixels * mapHeight;
+    graphics = HTML.getGraphics(canvas);
+    
+    drawBG();
+    graphics.copyImage(bgCanvas); 
+
+    xv = 0;
+    yv = 0;
+    posX = Math.floor(mapWidth / 2);
+    posY = Math.floor(mapHeight / 2);
+    randomApplePosition();
+
+    timerID = HTML.addTimer(game, gameSpeed);
+    game();
+}
+
+function game(){
+    posX += xv;
+    posY += yv;
+    if((posX < 0) || (posX >= mapWidth) || (posY < 0) || (posY >= mapHeight)){
+        loseGame();
+        return;
+    }
+
+    if(posX == appleX && posY == appleY){
+        randomApplePosition();
+    }
+
+    graphics.copyImage(bgCanvas);
+    drawApple();
+    drawSnake();
+}
+
+function loseGame(){
+    //Stop refreshing
+    if(timerID){
+        HTML.stopTimer(timerID);
+        timerID = undefined;
+    }
+
+    //Show lose screen
+    graphics.setTransparency(GameOverFadeTransparency);
+    graphics.fillRect(0, 0, canvas.width, canvas.height, GameOverFadeColor);
+    graphics.setTransparency(0);
+
+    graphics.setTextAlignCenter();
+    graphics.fillText("Game Over", canvas.width/2, canvas.height/2, Math.floor(cellPixels * 0.18 * mapWidth) + "px Arial", GameOverTextColor);
+    graphics.fillText("Press SPACE to continue", canvas.width/2, canvas.height*7/8, Math.floor(cellPixels * 0.05 * mapWidth) + "px Arial", GameOverTextColor);
+
+    loseScreenDisplayed = true;
+}
+
+function randomApplePosition(){
+    appleX = nextInt(0, mapWidth - 1);
+    appleY = nextInt(0, mapHeight - 1);
+
+    if(appleX == posX && appleY == posY){
+        appleX = (appleX + 1).clamp(0, mapWidth - 1);
+    }
+}
+
+function drawSnake(){
+    var cellX = cellPixels * posX;
+    var cellY = cellPixels * posY;
+
+    graphics.fillRect(
+        cellX + Math.floor((cellPixels - snakePixels) / 2),
+        cellY + Math.floor((cellPixels - snakePixels) / 2),
+        snakePixels,
+        snakePixels,
+        snakeColor
+    );
+}
+
+function drawApple(){
+    var cellX = cellPixels * appleX;
+    var cellY = cellPixels * appleY;
+
+    graphics.fillRect(
+        cellX + Math.floor((cellPixels - snakePixels) / 2),
+        cellY + Math.floor((cellPixels - snakePixels) / 2),
+        snakePixels,
+        snakePixels,
+        appleColor
+    );
+}
+
+function keyDown(evt){
     switch(evt.keyCode){
-        case 37: //left arrow
+        case Keys.A:
+        case Keys.LeftArrow: 
             xv=-1; yv=0;
             break;
-        case 38: //up arrow
+        case Keys.W:
+        case Keys.UpArrow:
             xv=0; yv=-1;
             break;
-        case 39: //right arrow
+        case Keys.D:
+        case Keys.RightArrow: 
             xv=1; yv=0;
             break;
-        case 40: //down arrow
+        case Keys.S:
+        case Keys.DownArrow: 
             xv=0; yv=1;
+            break;
+        case Keys.Space:
+            if(loseScreenDisplayed){
+                gameReset();
+            }
+            break;
+        default:
             break;
     }
 }
 
+function keyUp(evt){
+
+}
+
+Number.prototype.clamp = function clamp(min, max){
+    return Math.min(max, Math.max(this, min));
+}
+
+//Returns a random number between min and max, inclusive
+function nextInt(min, max){
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function applySettingsClick() {
-    initialize();
+    gameReset();
 }
 
 initialize();
+gameReset();
 
 /*
     px=py=10;
