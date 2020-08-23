@@ -152,7 +152,15 @@ function game(){
     drawSnake();
 }
 
+function winGame(){
+    displayEndingText("You won!");
+}
+
 function loseGame(){
+    displayEndingText("Game Over");
+}
+
+function displayEndingText(text){
     //Stop refreshing
     if(timerID){
         HTML.stopTimer(timerID);
@@ -165,19 +173,44 @@ function loseGame(){
     graphics.setTransparency(0);
 
     graphics.setTextAlignCenter();
-    graphics.fillText("Game Over", canvas.width/2, canvas.height/2, Math.floor(cellPixels * 0.18 * mapWidth) + "px Arial", GameOverTextColor);
+    graphics.fillText(text, canvas.width/2, canvas.height/2, Math.floor(cellPixels * 0.18 * mapWidth) + "px Arial", GameOverTextColor);
     graphics.fillText("Press SPACE to continue", canvas.width/2, canvas.height*7/8, Math.floor(cellPixels * 0.05 * mapWidth) + "px Arial", GameOverTextColor);
 
     loseScreenDisplayed = true;
 }
 
 function randomApplePosition(){
-    appleX = nextInt(0, mapWidth - 1);
-    appleY = nextInt(0, mapHeight - 1);
+    var randX = nextInt(0, mapWidth - 1);
+    var randY = nextInt(0, mapHeight - 1);
+    appleX = randX;
+    appleY = randY;
 
-    if(appleX == posX && appleY == posY){
-        appleX = (appleX + 1).clamp(0, mapWidth - 1);
-    }
+    do{
+        //Check for collisions with snake
+        var collision = false;
+        for(var i in trail){
+            if(appleX == trail[i].x && appleY == trail[i].y){
+                collision = true;
+                break;
+            }
+        }
+
+        if(collision){
+            appleX++;
+            if(appleX >= mapWidth){
+                appleX = 0;
+                appleY++;
+                if(appleY >= mapHeight){
+                    appleY = 0;
+                }
+            }
+        }else{
+            return;
+        }
+    }while(appleX != randX || appleY != randY);
+
+    //Wow, you won?
+    winGame();
 }
 
 function isSnakeColliding(){
