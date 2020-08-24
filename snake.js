@@ -20,8 +20,21 @@ const mouthLength = 0.27;
 const mouthColor = [255, 82, 157];
 
 const aiTypes = {
-    'manual': manualInput,
-    'direct': DirectAI
+    'manual': {
+        initialize: null,
+        getInput: manualInput,
+        debugDraw: null
+    },
+    'direct': {
+        initialize: null,
+        getInput: DirectAI,
+        debugDraw: null
+    },
+    'hamiltonian': {
+        initialize: initHamiltonian,
+        getInput: HamiltonianCycleAI,
+        debugDraw: drawHamCycle
+    }
 };
 
 //User input variables
@@ -38,7 +51,7 @@ var canvas;
 var graphics;
 var timerID;
 var loseScreenDisplayed = false;
-var getInput;
+var ai;
 var keyX = 0;
 var keyY = 0;
 
@@ -62,8 +75,8 @@ function initialize(){
 
 function loadUserVariables(){
     aiType = HTML.getListValue("aiType", "manual");
-    getInput = aiTypes[aiType];
-    if(!getInput) getInput = manualInput;
+    ai = aiTypes[aiType];
+    if(!ai) ai = aiTypes['manual'];
 
     mapWidth = mapHeight = HTML.getNumberValue("mapSize", 10);
     if(!mapWidth) mapWidth = mapHeight = 10;
@@ -115,11 +128,12 @@ function gameReset(){
     });
 
     timerID = HTML.addTimer(game, gameSpeed);
-    game();
+    if(ai.initialize) ai.initialize();
+    game(true);
 }
 
 function game(){
-    getInput();
+    if(ai.getInput) ai.getInput();
     if(Math.abs(inputX - velX) <=1 && Math.abs(inputY - velY) <= 1 && (inputX !=0 || inputY != 0)){
         velX = inputX;
         velY = inputY;
@@ -150,6 +164,7 @@ function game(){
     graphics.copyImage(bgCanvas);
     drawApple();
     drawSnake();
+    if(ai.debugDraw) ai.debugDraw();
 }
 
 function winGame(){
