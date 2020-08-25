@@ -15,8 +15,8 @@ function drawHamCycle(){
             var w = Math.abs(pos.x - lastPos.x);
             var h = Math.abs(pos.y - lastPos.y);
             graphics.fillRect(
-                (x * cellPixels) + (cellPixels / 2) - (w * pathPixelSize / 2),
-                (y * cellPixels) + (cellPixels / 2) - (h * pathPixelSize / 2),
+                (x * cellPixels) + (cellPixels / 2) - (pathPixelSize / 2),
+                (y * cellPixels) + (cellPixels / 2) - (pathPixelSize / 2),
                 (w * cellPixels) + pathPixelSize,
                 (h * cellPixels) + pathPixelSize,
                 pathColor
@@ -27,6 +27,7 @@ function drawHamCycle(){
     }
 }
 
+var hamFoundPath;
 var hamPath;
 var hamGraph;
 
@@ -37,26 +38,40 @@ function initHamiltonian(){
         x: posX,
         y: posY
     };
-    hamPath.push(start);
-    
-    for(var y = 0; y < mapHeight; y++){
-        hamGraph.push([]);
-        for(var x = 0; x < mapWidth; x++){
-            hamGraph[y].push(false);
-        }
+    hamPath.push(hamPointToInt(start));
+
+    for(var i = 0; i < (mapWidth * mapHeight); i++){
+        hamGraph.push(false);
     }
 
-    hamGraph[posY][posX] = true;
-    if(!hamCycleUtil(start)){
+    hamGraph[hamPointToInt(start)] = true;
+    if(!hamCycleUtil(hamPointToInt(start, 1))){
         console.log("A hamiltonian cycle does not exist!");
         loseGame();
+    }else{
+        //Convert graph back to something readable
+        hamFoundPath = [];
+        for(var i in hamPath){
+            hamFoundPath.push(hamIntToPoint(hamPath[i]));
+        }
     }
-
 }
 
-function hamCycleUtil(lastPos){
+function hamPointToInt(point){
+    return point.y * mapWidth + point.x;
+}
+
+function hamIntToPoint(id){
+    var yPos = Math.floor(id / mapHeight);
+    return {
+        x: id - (yPos * mapHeight),
+        y: yPos
+    };
+}
+
+function hamCycleUtil(lastPos, index){
     //Base case: all vertices are found
-    if(hamPath.length == mapWidth*mapHeight){
+    if(index == mapWidth*mapHeight){
         if(hamCycleGraphHasConnection(hamPath[0], hamPath[hamPath.length - 1])){
             return true;
         }else{
@@ -70,16 +85,15 @@ function hamCycleUtil(lastPos){
         var nextPos = connections[i];
 
         //Ensure the neighbor isn't already in our path
-        if(!hamGraph[nextPos.y][nextPos.x]){
+        if(!hamGraph[nextPos]){
             //Check if this neighbor will lead to a ham cycle solution
-            hamPath.push(nextPos);
-            hamGraph[nextPos.y][nextPos.x] = true;
-            if(hamCycleUtil(nextPos)){
+            hamPath[index] = nextPos;
+            hamGraph[nextPos] = true;
+            if(hamCycleUtil(nextPos, index + 1)){
                 return true;
             }else{
                 //Solution could not be found with this neighbor, so remove from the list and try the next one
-                hamPath.pop();
-                hamGraph[nextPos.y][nextPos.x] = false;
+                hamGraph[nextPos] = false;
             }
         }
     }
@@ -98,50 +112,32 @@ function hamIsPointInArray(array, point){
 */
 function hamGetConnections(pos){
     var connections = [];
-    if(pos.x > 0){
-        connections.push({
-            x: pos.x - 1,
-            y: pos.y
-        });
+    if(pos >= mapWidth){
+        connections.push(pos - mapWidth);
     }
-    if(pos.x < mapWidth - 1){
-        connections.push({
-            x: pos.x + 1,
-            y: pos.y
-        });
+
+    var temp = pos + mapWidth;
+    if(temp < (mapWidth*mapHeight)){
+        connections.push(temp);
     }
-    if(pos.y > 0){
-        connections.push({
-            x: pos.x,
-            y: pos.y - 1
-        });
+
+    temp = pos % mapWidth;
+    if(temp > 0){
+        connections.push(pos - 1);
     }
-    if(pos.y < mapHeight - 1){
-        connections.push({
-            x: pos.x,
-            y: pos.y + 1
-        });
+    if(temp < mapWidth - 1){
+        connections.push(pos + 1);
     }
 
     return connections;
 }
 
 function hamCycleGraphHasConnection(pos1, pos2){
-    return ((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2) == 1;
+    if((pos1 - mapHeight == pos2) || (pos1 + mapHeight == pos2)){
+        return true;
+    } else if(Math.floor(pos1 / mapWidth) == Math.floor(pos2 / mapWidth)){
+        if((pos1 - 1 == pos2) || (pos1 + 1 == pos2)) return true;
+    } 
+
+    return false;
 }
-
-/*
-//util function for getting the first element in an array
-if(!Array.prototype.first){
-    Array.prototype.first = function(){
-        return this[0];
-    };
-};
-
-//util function for getting the last element in an array
-if(!Array.prototype.last){
-    Array.prototype.last = function(){
-        return this[this.length - 1];
-    };
-};
-*/
