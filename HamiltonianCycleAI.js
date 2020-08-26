@@ -6,10 +6,10 @@ function HamiltonianCycleAI(){
 }
 
 function drawHamCycle(){
-    if(hamFoundPath && hamFoundPath.length > 1){
-        var lastPos = hamFoundPath[hamFoundPath.length - 1];
-        for(var i in hamFoundPath){
-            var pos = hamFoundPath[i];
+    if(hamPath && hamPath.length > 1){
+        var lastPos = hamPath[hamPath.length - 1];
+        for(var i in hamPath){
+            var pos = hamPath[i];
             var x = Math.min(pos.x, lastPos.x);
             var y = Math.min(pos.y, lastPos.y);
             var w = Math.abs(pos.x - lastPos.x);
@@ -27,7 +27,6 @@ function drawHamCycle(){
     }
 }
 
-var hamFoundPath;
 var hamPath;
 var hamGraph;
 
@@ -38,35 +37,27 @@ function initHamiltonian(){
         x: 0,
         y: 0
     };
-    hamPath.push(hamPointToInt(start));
+    hamPath.push(start);
 
-    for(var i = 0; i < (mapWidth * mapHeight); i++){
-        hamGraph.push(false);
+    for(var y = 0; y < mapHeight; y++){
+        var xArr = [];
+        hamGraph.push(xArr);
+        for(var x = 0; x < mapWidth; x++) {
+            xArr.push(false);
+        }
     }
 
-    hamGraph[hamPointToInt(start)] = true;
-    if(!hamCycleUtil(hamPointToInt(start), 1)){
+    hamGraph[start.y][start.x] = true;
+    if(!hamCycleUtil(start, 1)){
         console.log("A hamiltonian cycle does not exist!");
         loseGame();
     }else{
         //Convert graph back to something readable
-        hamFoundPath = [];
+        /*hamFoundPath = [];
         for(var i in hamPath){
             hamFoundPath.push(hamIntToPoint(hamPath[i]));
-        }
+        }*/
     }
-}
-
-function hamPointToInt(point){
-    return point.y * mapWidth + point.x;
-}
-
-function hamIntToPoint(id){
-    var yPos = Math.floor(id / mapHeight);
-    return {
-        x: id - (yPos * mapHeight),
-        y: yPos
-    };
 }
 
 function hamCycleUtil(lastPos, index){
@@ -88,12 +79,12 @@ function hamCycleUtil(lastPos, index){
         if(!hamGraph[nextPos]){
             //Check if this neighbor will lead to a ham cycle solution
             hamPath[index] = nextPos;
-            hamGraph[nextPos] = true;
+            hamGraph[nextPos.y][nextPos.x] = true;
             if(hamCycleUtil(nextPos, index + 1)){
                 return true;
             }else{
                 //Solution could not be found with this neighbor, so remove from the list and try the next one
-                hamGraph[nextPos] = false;
+                hamGraph[nextPos.y][nextPos.x] = false;
             }
         }
     }
@@ -117,24 +108,19 @@ function hamGetConnections(pos){
     var up;
     var down;
 
-    if(pos >= mapWidth) up = pos - mapWidth;
+    if(pos.y >= 1) up = {x: pos.x, y: pos.y - 1};
+    if(pos.y < (mapHeight - 1)) down = {x: pos.x, y: pos.y + 1};
 
-    var temp = pos + mapWidth;
-    if(temp < (mapWidth*mapHeight)) down = temp;
+    if(pos.x >= 1) left = {x: pos.x - 1, y: pos.y};
+    if(pos.x < (mapWidth - 1)) right = {x: pos.x + 1, y: pos.y};
 
-    temp = pos % mapWidth;
-    if(temp > 0) left = pos - 1;
-
-    if(temp < mapWidth - 1) right = pos + 1;
-
-    var x = pos % mapWidth;
-    if(Math.floor(pos / mapWidth) % 2 == 0){
+    if(pos.y % 2 == 0){
         /*if(x == 1){ 
             if(down !== undefined) connections.push(down);
             if(right !== undefined) connections.push(right);
             if(up !== undefined) connections.push(up);
             if(left !== undefined) connections.push(left);
-        }else*/ if(x == 0){
+        }else*/ if(pos.x == 0){
             if(up !== undefined) connections.push(up);
             if(left !== undefined) connections.push(left);
             if(right !== undefined) connections.push(right);
@@ -147,12 +133,12 @@ function hamGetConnections(pos){
         }
         
     }else{
-        if(x == 1){
+        if(pos.x == 1){
             if(down !== undefined) connections.push(down);
             if(left !== undefined) connections.push(left);
             if(up !== undefined) connections.push(up);
             if(right !== undefined) connections.push(right);
-        }else if(x == 0){
+        }else if(pos.x == 0){
             if(up !== undefined) connections.push(up);
             if(left !== undefined) connections.push(left);
             if(right !== undefined) connections.push(right);
@@ -169,11 +155,9 @@ function hamGetConnections(pos){
 }
 
 function hamCycleGraphHasConnection(pos1, pos2){
-    if((pos1 - mapHeight == pos2) || (pos1 + mapHeight == pos2)){
+    if(((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2) == 1){
         return true;
-    } else if(Math.floor(pos1 / mapWidth) == Math.floor(pos2 / mapWidth)){
-        if((pos1 - 1 == pos2) || (pos1 + 1 == pos2)) return true;
-    } 
-
-    return false;
+    }else{
+        return false;
+    }
 }
