@@ -6,10 +6,10 @@ function HamiltonianCycleAI(){
 }
 
 function drawHamCycle(){
-    if(hamPath && hamPath.length > 1){
-        var lastPos = hamPath[hamPath.length - 1];
-        for(var i in hamPath){
-            var pos = hamPath[i];
+    if(hamFoundPath && hamFoundPath.length > 1){
+        var lastPos = hamFoundPath[hamFoundPath.length - 1];
+        for(var i in hamFoundPath){
+            var pos = hamFoundPath[i];
             var x = Math.min(pos.x, lastPos.x);
             var y = Math.min(pos.y, lastPos.y);
             var w = Math.abs(pos.x - lastPos.x);
@@ -35,8 +35,8 @@ function initHamiltonian(){
     hamPath = [];
     hamGraph = [];
     var start = {
-        x: posX,
-        y: posY
+        x: 0,
+        y: 0
     };
     hamPath.push(hamPointToInt(start));
 
@@ -45,7 +45,7 @@ function initHamiltonian(){
     }
 
     hamGraph[hamPointToInt(start)] = true;
-    if(!hamCycleUtil(hamPointToInt(start, 1))){
+    if(!hamCycleUtil(hamPointToInt(start), 1)){
         console.log("A hamiltonian cycle does not exist!");
         loseGame();
     }else{
@@ -112,21 +112,57 @@ function hamIsPointInArray(array, point){
 */
 function hamGetConnections(pos){
     var connections = [];
-    if(pos >= mapWidth){
-        connections.push(pos - mapWidth);
-    }
+    var left;
+    var right;
+    var up;
+    var down;
+
+    if(pos >= mapWidth) up = pos - mapWidth;
 
     var temp = pos + mapWidth;
-    if(temp < (mapWidth*mapHeight)){
-        connections.push(temp);
-    }
+    if(temp < (mapWidth*mapHeight)) down = temp;
 
     temp = pos % mapWidth;
-    if(temp > 0){
-        connections.push(pos - 1);
-    }
-    if(temp < mapWidth - 1){
-        connections.push(pos + 1);
+    if(temp > 0) left = pos - 1;
+
+    if(temp < mapWidth - 1) right = pos + 1;
+
+    var x = pos % mapWidth;
+    if(Math.floor(pos / mapWidth) % 2 == 0){
+        /*if(x == 1){ 
+            if(down !== undefined) connections.push(down);
+            if(right !== undefined) connections.push(right);
+            if(up !== undefined) connections.push(up);
+            if(left !== undefined) connections.push(left);
+        }else*/ if(x == 0){
+            if(up !== undefined) connections.push(up);
+            if(left !== undefined) connections.push(left);
+            if(right !== undefined) connections.push(right);
+            if(down !== undefined) connections.push(down);
+        }else{
+            if(right !== undefined) connections.push(right);
+            if(down !== undefined) connections.push(down);
+            if(up !== undefined) connections.push(up);
+            if(left !== undefined) connections.push(left);
+        }
+        
+    }else{
+        if(x == 1){
+            if(down !== undefined) connections.push(down);
+            if(left !== undefined) connections.push(left);
+            if(up !== undefined) connections.push(up);
+            if(right !== undefined) connections.push(right);
+        }else if(x == 0){
+            if(up !== undefined) connections.push(up);
+            if(left !== undefined) connections.push(left);
+            if(right !== undefined) connections.push(right);
+            if(down !== undefined) connections.push(down);
+        }else{
+            if(left !== undefined) connections.push(left);
+            if(down !== undefined) connections.push(down);
+            if(up !== undefined) connections.push(up);
+            if(right !== undefined) connections.push(right);
+        }
     }
 
     return connections;

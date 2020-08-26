@@ -209,6 +209,9 @@ function randomApplePosition(){
                 break;
             }
         }
+        if(appleX == posX && appleY == posY){
+            collision = true;
+        }
 
         if(collision){
             appleX++;
